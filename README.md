@@ -1,93 +1,85 @@
-# 🐘 Real-Time Elephant Detection with WhatsApp Alerts
+import cv2
+import numpy as np
+from ultralytics import YOLO
+import mss
+from twilio.rest import Client
+import time
 
-This project uses **YOLOv8 (Ultralytics)** for real-time object detection and integrates **Twilio WhatsApp API** to send instant alerts when an elephant is detected on screen.
-
----
-
-## 🚀 Features
-- 🎯 Real-time object detection using YOLOv8  
-- 🖥️ Live screen capture using MSS  
-- 📲 Automatic WhatsApp alerts via Twilio  
-- ⏱️ Cooldown system to prevent message spam  
-- 🧠 Detects "elephant" class from COCO dataset  
-
----
-
-## 🛠️ Tech Stack
-- Python  
-- OpenCV (`cv2`)  
-- NumPy  
-- Ultralytics YOLOv8  
-- Twilio API  
-- MSS (screen capture)  
-
----
-
-## ⚙️ How It Works
-1. Captures your screen continuously using MSS  
-2. Runs YOLOv8 object detection on each frame  
-3. Checks if an **elephant** is detected  
-4. Sends a WhatsApp alert using Twilio  
-5. Applies a cooldown (default: 60 seconds) to avoid spam alerts  
-
----
-
-## 📦 Setup Instructions
-
-### 1️⃣ Install Dependencies
-```bash
-pip install opencv-python numpy ultralytics mss twilio
-2️⃣ Add Twilio Credentials
-Python
-
-
-Run
+# ---------------- TWILIO CONFIG ----------------
 account_sid = "YOUR_ACCOUNT_SID"
 auth_token = "YOUR_AUTH_TOKEN"
-3️⃣ Configure WhatsApp Numbers
-Python
 
+client = Client(account_sid, auth_token)
 
-Run
-FROM_WHATSAPP = "whatsapp:+14155238886"
-TO_WHATSAPP = "whatsapp:+91XXXXXXXXXX"
-4️⃣ Add COCO Class File
-Make sure coco.txt is present in the project directory.
+FROM_WHATSAPP = "whatsapp:+14155238886"   # Twilio sandbox number
+TO_WHATSAPP = "whatsapp:+91XXXXXXXXXX"    # Your number
 
-5️⃣ Run the Project
-Bash
+# ---------------- YOLO MODEL ----------------
+model = YOLO('yolov8s.pt')
 
-python main.py
-📌 Use Cases
-🌲 Wildlife monitoring systems
+# Load COCO class names
+with open("coco.txt", "r") as f:
+    class_list = f.read().split("\n")
 
-🚨 Forest safety alerts
+# ---------------- SCREEN CAPTURE ----------------
+sct = mss.mss()
+monitor = sct.monitors[1]
 
-🛡️ Smart surveillance systems
+cv2.namedWindow("Detection")
 
-🤖 AI-based event detection
+# ---------------- CONTROL VARIABLES ----------------
+alert_sent = False
+last_alert_time = 0
+cooldown = 60   # seconds (avoid spam)
 
-⚠️ Notes
-Requires active internet connection for WhatsApp alerts
+try:
+    while True:
+        # Capture screen
+        sct_img = sct.grab(monitor)
+        frame = np.array(sct_img)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
 
-Twilio sandbox must be configured before use
+        # YOLO Prediction
+        results = model.predict(frame, verbose=False)
 
-Detection accuracy depends on YOLO model (yolov8s.pt)
+        detected_elephant = False
 
-💡 Future Improvements
-🔊 Add sound alert system
+        # Check detections
+        for r in results:
+            for box in r.boxes:
+                cls_id = int(box.cls[0])
+                label = class_list[cls_id]
 
-🐅 Detect multiple animal classes
+                if label == "elephant":
+                    detected_elephant = True
 
-📱 Deploy on edge devices (Raspberry Pi / Jetson Nano)
+        # ---------------- WHATSAPP ALERT ----------------
+        current_time = time.time()
 
-🌐 Build a web dashboard
+        if detected_elephant:
+            if (not alert_sent) or (current_time - last_alert_time > cooldown):
+                try:
+                    message = client.messages.create(
+                        body="🚨 ALERT: Elephant Detected!",
+                        from_=FROM_WHATSAPP,
+                        to=TO_WHATSAPP
+                    )
+                    print("✅ WhatsApp Alert Sent!")
+                    alert_sent = True
+                    last_alert_time = current_time
+                except Exception as e:
+                    print("❌ Error sending WhatsApp:", e)
 
-📷 Demo
-Add screenshots or GIFs here
+        else:
+            alert_sent = False
 
-📜 License
-This project is open-source and available under the MIT License.
+        # ---------------- DISPLAY ----------------
+        annotated_frame = results[0].plot()
+        cv2.imshow("Detection", annotated_frame)
 
-👨‍💻 Author
-Krishna Verma
+        # Exit on ESC
+        if cv2.waitKey(1) & 0xFF == 27:
+            break
+
+finally:
+    cv2.destroyAllWindows()
