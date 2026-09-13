@@ -93,7 +93,7 @@ def send_whatsapp(client, to_number, message_text="🚨 ALERT: Elephant Detected
         return False, str(e)
 
 # Sidebar Configuration
-st.sidebar.image("https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=400&q=80", use_column_width=True)
+st.sidebar.image("https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=400&q=80", use_container_width=True)
 st.sidebar.markdown("## ⚙️ Demo Controls")
 
 # Input Source
@@ -239,7 +239,7 @@ if source_option == "🐘 Demo Video (ele.mp4)":
                 # Display annotated frame
                 annotated_frame = results[0].plot()
                 annotated_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-                video_placeholder.image(annotated_rgb, channels="RGB", use_column_width=True)
+                video_placeholder.image(annotated_rgb, channels="RGB", use_container_width=True)
                 time.sleep(0.03)
             cap.release()
 
@@ -252,7 +252,7 @@ elif source_option == "📤 Upload Video / Image":
             img_array = np.array(image)
             results = model.predict(img_array, conf=conf_threshold)
             annotated = results[0].plot()
-            st.image(annotated, caption="Detection Result", use_column_width=True)
+            st.image(annotated, caption="Detection Result", use_container_width=True)
 
             elephant_detected = any(
                 (class_list[int(b.cls[0])] if class_list else model.names.get(int(b.cls[0]))) == "elephant"
@@ -271,7 +271,7 @@ elif source_option == "📤 Upload Video / Image":
             ret, frame = cap.read()
             if ret:
                 results = model.predict(frame, conf=conf_threshold)
-                st.image(results[0].plot(), caption="First Frame Detection", use_column_width=True)
+                st.image(results[0].plot(), caption="First Frame Detection", use_container_width=True)
             cap.release()
 
 elif source_option == "📸 Webcam Snapshot":
@@ -280,7 +280,7 @@ elif source_option == "📸 Webcam Snapshot":
         img = Image.open(cam_img)
         img_array = np.array(img)
         results = model.predict(img_array, conf=conf_threshold)
-        st.image(results[0].plot(), caption="Webcam Detection", use_column_width=True)
+        st.image(results[0].plot(), caption="Webcam Detection", use_container_width=True)
 
 # Alert History Log
 if st.session_state.alert_log:
