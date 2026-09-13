@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  wildlens:
+    build: .
+    container_name: wildlens-detector
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount model weights and local test files so they don't need re-downloading on container recreate
+      - ./yolov8s.pt:/app/yolov8s.pt:ro
+      - ./ele.mp4:/app/ele.mp4:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HEADLESS=true

@@ -1,0 +1,15 @@
+[Unit]
+Description=Wildlens Real-Time Elephant Detection Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Wildlens
+EnvironmentFile=/home/ubuntu/Wildlens/.env
+ExecStart=/home/ubuntu/Wildlens/venv/bin/python main.py --headless
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

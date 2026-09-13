@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Environment variables
+.env
+
+# YOLO weights & runs
+*.pt
+runs/
+
+# Operating System
+.DS_Store
+Thumbs.db
